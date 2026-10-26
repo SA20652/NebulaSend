@@ -1,0 +1,47 @@
+name: Build NEBULA APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download project
+        uses: actions/checkout@v4
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Prepare Android project
+        run: |
+          mkdir -p app/src/main/java/com/nebula/messenger
+
+          cp app_build.gradle.kts app/build.gradle.kts
+          cp AndroidManifest.xml app/src/main/AndroidManifest.xml
+          cp MainActivity.kt app/src/main/java/com/nebula/messenger/MainActivity.kt
+
+          if [ -f BackendConfig.kt ]; then
+            cp BackendConfig.kt app/src/main/java/com/nebula/messenger/BackendConfig.kt
+          fi
+
+      - name: Build APK
+        run: gradle assembleDebug
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEBULA-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
